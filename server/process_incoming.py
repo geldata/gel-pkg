@@ -385,6 +385,7 @@ def append_artifact(
     version_details = metadata["version_details"]
     tags = dict(metadata.get("tags", {}))
     tags.pop("bucket", None)
+    tags.pop("buckets", None)
     index_key = (metadata["name"], version_key, metadata["architecture"])
     prev_pkg = packages.get(index_key)
     if prev_pkg is not None:
@@ -615,51 +616,62 @@ def main(
 
                 metadata = json.loads(metadata_file.read())
                 repository = metadata.get("repository")
-                tags = metadata.get("tags") or {}
-                target_bucket = tags.get("bucket", "default")
-                bucket = cfg["common"]["buckets"].get(target_bucket)
-                if bucket is None:
-                    raise RuntimeError(
-                        f"invalid target bucket in metadata: {target_bucket!r}"
-                        f", configure it in genrepo.toml"
-                    )
 
                 local_dir_path = pathlib.Path(local_dir)
                 temp_dir_path = pathlib.Path(temp_dir)
                 lock_path = local_dir_path / f"{repository}.lock"
 
+                tags = metadata.get("tags") or {}
+
+                raw_tag_buckets = tags.get("buckets", "")
+                if raw_tag_buckets:
+                    tag_buckets = [
+                        bucket.strip() for bucket in raw_tag_buckets.split(",")
+                    ]
+
+                if not tag_buckets:
+                    tag_buckets = [tags.get("bucket", "default")]
+
                 logger.info(f"Obtaining {lock_path}")
                 with filelock.FileLock(lock_path, timeout=3600):
-                    if repository == "generic":
-                        process_generic(
-                            cfg,
-                            s3,
-                            tf,
-                            metadata,
-                            bucket,
-                            temp_dir_path,
-                            local_dir_path,
-                        )
-                    elif repository == "apt":
-                        process_apt(
-                            cfg,
-                            s3,
-                            tf,
-                            metadata,
-                            bucket,
-                            temp_dir_path,
-                            local_dir_path,
-                        )
-                    elif repository == "rpm":
-                        process_rpm(
-                            cfg,
-                            s3,
-                            tf,
-                            metadata,
-                            bucket,
-                            temp_dir_path,
-                            local_dir_path,
-                        )
+                    for target_bucket in tag_buckets:
+                        bucket = cfg["common"]["buckets"].get(target_bucket)
+                        if bucket is None:
+                            raise RuntimeError(
+                                f"invalid target bucket in metadata: {target_bucket!r}"
+                                f", configure it in genrepo.toml"
+                            )
+
+                        if repository == "generic":
+                            process_generic(
+                                cfg,
+                                s3,
+                                tf,
+                                metadata,
+                                bucket,
+                                temp_dir_path,
+                                local_dir_path,
+                            )
+                        elif repository == "apt":
+                            process_apt(
+                                cfg,
+                                s3,
+                                tf,
+                                metadata,
+                                bucket,
+                                temp_dir_path,
+                                local_dir_path,
+                            )
+                        elif repository == "rpm":
+                            process_rpm(
+                                cfg,
+                                s3,
+                                tf,
+                                metadata,
+                                bucket,
+                                temp_dir_path,
+                                local_dir_path,
+                            )
 
             logger.info("Successfully processed: %s", path)
         finally:
