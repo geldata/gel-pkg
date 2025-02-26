@@ -622,6 +622,7 @@ def main(
                 lock_path = local_dir_path / f"{repository}.lock"
 
                 tags = metadata.get("tags") or {}
+                tag_buckets = []
 
                 raw_tag_buckets = tags.get("buckets", "")
                 if raw_tag_buckets:
