@@ -7,13 +7,14 @@ After=network.target
 [Service]
 Type=notify
 
-User=edgedb
-Group=edgedb
+User=@@{name_for_user_and_dir}
+Group=@@{name_for_user_and_dir}
 
-Environment=EDGEDATA=@@{localstatedir}/lib/edgedb/@@{slot}/data/
-RuntimeDirectory=edgedb
+Environment=GELDATA=@@{localstatedir}/lib/@@{name_for_user_and_dir}/@@{slot}/data/
+RuntimeDirectory=@@{name_for_user_and_dir}
 
-ExecStart=@@{bindir}/edgedb-server --data-dir=${EDGEDATA} --runstate-dir=%t/edgedb --tls-cert-mode=generate_self_signed
+ExecStartPre=@@{pre_start_script}
+ExecStart=@@{bindir}/@@{name} --data-dir=${GELDATA} --runstate-dir=%t/@@{name_for_user_and_dir} --tls-cert-mode=generate_self_signed
 ExecReload=/bin/kill -HUP ${MAINPID}
 KillMode=mixed
 KillSignal=SIGINT

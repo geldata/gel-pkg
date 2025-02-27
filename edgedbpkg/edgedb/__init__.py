@@ -308,6 +308,10 @@ class GelNoPostgres(packages.BundledPythonPackage):
     def marketing_slug(self) -> str:
         return "gel"
 
+    @property
+    def name_for_user_and_dir(self) -> str:
+        return self.marketing_slug
+
     def version_includes_revision(self) -> bool:
         return ".s" in self.pretty_version
 
@@ -574,6 +578,22 @@ class GelNoPostgres(packages.BundledPythonPackage):
             """
         )
         return script
+
+    def get_pre_start_script(self, build: targets.Build) -> str:
+        if self.marketing_slug == "gel" and self.slot == "6":
+            # In pre-6.2 packages we shipped broken service units files
+            # that contained non-renamed user and data directory.
+            msg = (
+                "Obsolete directory structure detected. "
+                'Please move "/var/lib/edgedb/6/data" to "/var/lib/gel/6/data"'
+                ' and run `chown -R gel:gel "/var/lib/gel/6/data"`'
+            )
+            return (
+                "/bin/sh -c 'if [ -d /var/lib/edgedb/6/data ]; then "
+                + f"echo \\'{msg}\\' >&2; exit 1; fi'"
+            )
+        else:
+            return ""
 
     def get_private_libraries(self, build: targets.Build) -> list[str]:
         # Automatic dependency introspection points to libpq.so,

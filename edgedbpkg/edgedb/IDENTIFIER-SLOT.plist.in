@@ -11,9 +11,9 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>@@{bindir}/edgedb-server</string>
-        <string>--data-dir=@@{localstatedir}/lib/edgedb/@@{slot}/data/</string>
-        <string>--runstate-dir=@@{runstatedir}/edgedb/</string>
+        <string>@@{bindir}/@@{name}</string>
+        <string>--data-dir=@@{localstatedir}/lib/@@{name_for_user_and_dir}/@@{slot}/data/</string>
+        <string>--runstate-dir=@@{runstatedir}/@@{name_for_user_and_dir}/</string>
         <string>--tls-cert-mode=generate_self_signed</string>
     </array>
 
@@ -21,7 +21,7 @@
     <true/>
 
     <key>UserName</key>
-    <string>edgedb</string>
+    <string>@@{name_for_user_and_dir}</string>
 
     <key>KeepAlive</key>
     <dict>
