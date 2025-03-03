@@ -15,7 +15,7 @@ else
     dash_j=""
 fi
 
-cliurl="https://packages.edgedb.com/dist/${PKG_PLATFORM_VERSION}-apple-darwin.nightly"
+cliurl="https://packages.edgedb.com/dist/${PKG_PLATFORM_VERSION}-apple-darwin"
 
 tarball=
 for pack in ${dest}/*.tar; do
