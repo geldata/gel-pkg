@@ -19,7 +19,7 @@ else
 fi
 
 machine=$(uname -m)
-cliurl="https://packages.edgedb.com/dist/${machine}-unknown-linux-musl.nightly/edgedb-cli"
+cliurl="https://packages.edgedb.com/dist/${machine}-unknown-linux-musl/edgedb-cli"
 
 try=1
 while [ $try -le 5 ]; do

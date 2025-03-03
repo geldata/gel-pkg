@@ -124,7 +124,7 @@ else\n\
 fi\n\
 \n\
 machine=$(uname -m)\n\
-cliurl="https://packages.edgedb.com/dist/${machine}-unknown-linux-musl.nightly/edgedb-cli"\n\
+cliurl="https://packages.edgedb.com/dist/${machine}-unknown-linux-musl/edgedb-cli"\n\
 \n\
 try=1\n\
 while [ $try -le 5 ]; do\n\
