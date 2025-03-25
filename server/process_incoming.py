@@ -739,7 +739,7 @@ def process_generic(
         put(bucket, metadata_path, archive_dir, cache=True)
 
         links = metadata.get("publish_link_to_latest")
-        if links:
+        if links and desc.get("encoding") == "identity":
             if isinstance(links, bool):
                 links = [basename]
             else:
