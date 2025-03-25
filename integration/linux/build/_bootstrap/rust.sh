@@ -2,7 +2,7 @@
 
 set -ex
 
-: ${RUST_VERSION:=1.82.0}
+: ${RUST_VERSION:=1.85.0}
 
 cd /usr/src
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- \
