@@ -6,6 +6,7 @@
 {bindir}/pg_dump
 {bindir}/pg_restore
 {bindir}/pg_rewind
+{bindir}/pg_verifybackup
 {bindir}/psql
 {bindir}/postgres
 {libdir}/postgresql/*.so
