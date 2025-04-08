@@ -82,7 +82,7 @@ if [ -z "${VIRTUAL_ENV}"]; then
     ${PYTHON} -m pip install -U pip setuptools wheel
 fi
 
-${PYTHON} -m pip install -U git+https://github.com/edgedb/edgedb-pkg
+${PYTHON} -m pip install -U git+https://github.com/edgedb/edgedb-pkg@update-setuptools
 
 if [ -n "${METAPKG_PATH}" ]; then
     p=$(${PYTHON} -c 'import metapkg;print(metapkg.__path__[0])')
