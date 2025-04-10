@@ -106,7 +106,6 @@ class GelNoPostgres(packages.BundledPythonPackage):
     common_build_reqs: packages.RequirementsSpec = {
         "*": [
             "pyentrypoint (>=1.0.0)",
-            "pypkg-setuptools (~= 77.0)",
         ],
     }
 
