@@ -127,7 +127,7 @@ class GelNoPostgres(packages.BundledPythonPackage):
         postgresql.PostgreSQL(version="14.11"),
         postgresql.PostgreSQL(version="15.6"),
         postgresql.PostgreSQL(version="16.4"),
-        postgresql.PostgreSQL(version="17.0"),
+        postgresql.PostgreSQL(version="17.4"),
         python_bundle.Python(version="3.10.11"),
         python_bundle.Python(version="3.11.8"),
         python_bundle.Python(version="3.12.2"),
