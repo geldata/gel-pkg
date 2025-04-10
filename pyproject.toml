@@ -2,7 +2,7 @@
 name = "edgedb-pkg"
 dynamic = ["version"]
 requires-python = '>=3.12.0'
-dependencies = ["metapkg@git+https://github.com/edgedb/metapkg.git"]
+dependencies = ["metapkg@git+https://github.com/geldata/metapkg.git"]
 
 [build-system]
 requires = ["setuptools>=64", "setuptools-scm>=8"]
@@ -11,9 +11,11 @@ build-backend = "setuptools.build_meta"
 [project.optional-dependencies]
 dev = ['black', 'ruff', 'mypy']
 server = [
-    "boto3-stubs[boto3,s3] ~= 1.35.40",
-    "python-debian ~= 0.1.49",
-    "semver ~= 3.0.2",
+    "boto3-stubs[boto3,s3] ~= 1.37",
+    "click ~= 8.0",
+    "filelock ~= 3.18",
+    "python-debian ~= 1.0",
+    "semver ~= 3.0",
 ]
 
 [tool.setuptools]
@@ -32,9 +34,7 @@ exclude = [".github"]
 
 [tool.mypy]
 files = ["edgedbpkg", "server/process_incoming.py"]
-
 python_version = "3.12"
-ignore_missing_imports = true
 show_error_codes = true
 strict = true
 namespace_packages = true

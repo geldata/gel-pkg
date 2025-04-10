@@ -1,49 +1,5 @@
-[project]
-name = "process_incoming"
-description = "Universal package processor"
-authors = [{ name = "Gel Data Inc", email = "hello@geldata.com" }]
-requires-python = ">=3.12"
-readme = "README.rst"
-version = "1.0.0"
-dependencies = [
-    'boto3',
-    'mypy-boto3-s3',
-    'click',
-    'typing-extensions',
-    'tomli',
-    'semver',
-    'filelock',
-    'python-debian',
-]
-
-[project.urls]
-github = "https://github.com/geldata/gel-pkg/"
-
-[project.scripts]
-process_incoming = "process_incoming:main"
-
-[build-system]
-requires = ["setuptools>=59", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools]
-py-modules = ["process_incoming"]
-
-[tool.black]
-line-length = 79
-target-version = ["py312"]
-
-[tool.mypy]
-files = "process_incoming.py"
-python_version = "3.12"
-ignore_missing_imports = true
-show_error_codes = true
-strict = true
-
 [tool.ruff]
-line-length = 79
-indent-width = 4
-target-version = "py312"
+extend = "../pyproject.toml"
 
 [tool.ruff.lint]
 preview = true
@@ -66,3 +22,4 @@ extend-select = [
     "UP",    # pyupgrade
     "W",     # warning
 ]
+ignore = ["COM812"]

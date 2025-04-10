@@ -21,13 +21,13 @@ import sys
 import tarfile
 import tempfile
 import textwrap
+import tomllib
 
-import boto3
-import boto3.session
+import boto3  # type: ignore [import-untyped]
+import boto3.session  # type: ignore [import-untyped]
 import click
 import filelock
 import semver
-import tomli
 
 from debian import debian_support
 
@@ -119,7 +119,8 @@ version_regexp = re.compile(
 
 
 def subprocess_run(
-    *args: Any, **kwargs: Any,
+    *args: Any,
+    **kwargs: Any,
 ) -> subprocess.CompletedProcess[str]:
     kw = dict(kwargs)
     if kw.get("stdout") is None and not kw.get("capture_output"):
@@ -257,7 +258,7 @@ def format_version_key(ver: Version, revision: str) -> str:
         # or debian version comparison algorithm.
         prerelease = (
             ("~" if pre["phase"] == "dev" else ".")
-            + f'{pre["phase"]}.{pre["number"]}'
+            + f"{pre['phase']}.{pre['number']}"
             for pre in ver["prerelease"]
         )
         ver_key += "~" + "".join(prerelease).lstrip(".~")
@@ -314,7 +315,8 @@ def remove_old(
             build_date = datetime.datetime.fromisoformat(build_date_str)
         else:
             build_date = datetime.datetime.fromtimestamp(
-                0, tz=datetime.UTC,
+                0,
+                tz=datetime.UTC,
             )
         ver_key = (version, build_date)
         index.setdefault(key, {}).setdefault(ver_key, []).append(obj.key)
@@ -568,7 +570,7 @@ def main(
     upload_listing: str,
 ) -> None:
     with open(config, "rb") as cf:
-        cfg = cast(Config, tomli.load(cf))
+        cfg = cast(Config, tomllib.load(cf))
         if "common" not in cfg:
             raise ValueError("missing required [common] section in config")
         if not cfg["common"].get("buckets"):
@@ -1324,7 +1326,8 @@ def process_rpm(
             pkgmetadata["name"] = basename
 
         version_key = format_version_key(
-            pkgmetadata["version_details"], pkgmetadata["revision"],
+            pkgmetadata["version_details"],
+            pkgmetadata["revision"],
         )
 
         slot_name = pkgmetadata["name"]
@@ -1355,10 +1358,10 @@ def process_rpm(
         comp = functools.cmp_to_key(debian_support.version_compare)
         for _slot_name, versions in slot_index.items():
             sorted_versions = sorted(
-                    versions,
-                    key=lambda v: comp(v[0]),
-                    reverse=True,
-                )
+                versions,
+                key=lambda v: comp(v[0]),
+                reverse=True,
+            )
 
             for ver_key, name, ver_nevra, arch in sorted_versions[3:]:
                 logger.info(f"process_rpm: deleting outdated {ver_nevra}")

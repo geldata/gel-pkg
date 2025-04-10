@@ -17,13 +17,16 @@ jobs:
         # because typing of stdlib might be different.
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    permissions: {}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - uses: psf/black@stable
-      - uses: python/mypy@master
+      - uses: astral-sh/ruff-action@9828f49eb4cadf267b40eaa330295c412c68c1f9 # 3.2.2
+      - uses: python/mypy@9397454fb5aead107461b089e7cf190bf538d20a # 1.5.0
         with:
           install_types: no
           paths: edgedbpkg
