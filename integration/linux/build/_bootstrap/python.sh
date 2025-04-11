@@ -2,8 +2,8 @@
 
 set -ex
 
-: ${PYTHON_VERSION:=3.12.7}
-: ${PYTHON_PIP_VERSION:=24.2}
+: ${PYTHON_VERSION:=3.12.9}
+: ${PYTHON_PIP_VERSION:=25.0.1}
 
 source "${BASH_SOURCE%/*}/_helpers.sh"
 

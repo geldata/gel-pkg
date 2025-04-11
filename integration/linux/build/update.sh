@@ -127,7 +127,7 @@ $SED -ri \
 
 embed_script entrypoint.sh "$target"
 
-for bootstrap in _bootstrap/*.sh; do
+for bootstrap in $(ls _bootstrap/*.sh | sort); do
 	embed_script "$bootstrap" "$target"
 done
 
