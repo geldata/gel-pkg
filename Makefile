@@ -7,7 +7,6 @@ SUPPORTED_TARGETS = \
 	debian-bookworm \
 	ubuntu-bionic \
 	ubuntu-focal \
-	ubuntu-hirsute \
 	ubuntu-jammy \
 	ubuntu-noble \
 	centos-7 \
