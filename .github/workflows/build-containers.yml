@@ -4,7 +4,9 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - master
+    paths:
+      - 'integration/**'
 
 jobs:
   generate-matrix:
@@ -14,7 +16,7 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 
@@ -28,26 +30,31 @@ jobs:
             split("\t") as $parts |
             {
               stage: $parts[0],
-              container: $parts[1],
               platform: ($parts[1] | split("-")[0]),
               platform_version: ($parts[1] | split("-")[1] // ""),
             }' | jq -s .)
 
           echo "matrix=$(echo "$MATRIX" | jq -c .)" >> $GITHUB_OUTPUT
 
-  build-containers:
+  image:
     needs: generate-matrix
     runs-on: ubuntu-latest
-    permissions: {}
+    permissions:
+      packages: write
     strategy:
       matrix:
         include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
       - name: Determine Architectures
         id: arch
         run: |
-          CONTAINER="${{ matrix.container }}"
+          CONTAINER="${{ matrix.platform }}-${{ matrix.platform_version }}"
           if [[ "$CONTAINER" == *aarch64* ]]; then
             echo "archs=linux/arm64" >> $GITHUB_OUTPUT
           elif [[ "$CONTAINER" == *x86_64* ]]; then
@@ -78,15 +85,15 @@ jobs:
       - name: Build and Push Image
         uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # 6.15.0
         with:
-          context: integration/linux/${{ matrix.stage }}/${{ matrix.container }}
+          context: integration/linux/${{ matrix.stage }}/${{ matrix.platform }}-${{ matrix.platform_version }}
           push: true
           platforms: ${{ steps.arch.outputs.archs }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/gelpkg-${{ matrix.stage }}-${{ matrix.container }}:latest
-            ghcr.io/${{ github.repository_owner }}/gelpkg-${{ matrix.stage }}-${{ matrix.container }}:${{ steps.meta.outputs.date }}
+            ghcr.io/${{ github.repository_owner }}/gelpkg-${{ matrix.stage }}-${{ matrix.platform }}-${{ matrix.platform_version }}:latest
+            ghcr.io/${{ github.repository_owner }}/gelpkg-${{ matrix.stage }}-${{ matrix.platform }}-${{ matrix.platform_version }}:${{ steps.meta.outputs.date }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.created=${{ steps.meta.outputs.date }}
-          cache-from: type=registry,dest=ghcr.io/${{ github.repository_owner }}/gelpkg-${{ matrix.stage }}-${{ matrix.container }}:cache
-          cache-to: type=registry,dest=ghcr.io/${{ github.repository_owner }}/gelpkg-${{ matrix.stage }}-${{ matrix.container }}:cache
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/gelpkg-${{ matrix.stage }}-${{ matrix.platform }}-${{ matrix.platform_version }}:cache
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/gelpkg-${{ matrix.stage }}-${{ matrix.platform }}-${{ matrix.platform_version }}:cache
