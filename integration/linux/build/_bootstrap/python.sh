@@ -17,9 +17,9 @@ fetch_keys "${PYTHON_KEYS[@]}"
 mkdir -p /usr/src/python
 cd /usr/src
 
-curl -fsSLo python.tar.xz \
+$WGET -O python.tar.xz \
     "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz"
-curl -fsSLo python.tar.xz.asc \
+$WGET -O python.tar.xz.asc \
     "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz.asc"
 
 gpg --batch --verify python.tar.xz.asc python.tar.xz
@@ -64,7 +64,7 @@ ln -sf python3 python
 ln -sf python3-config python-config
 
 cd /usr/src
-curl -fsSLo get-pip.py 'https://bootstrap.pypa.io/get-pip.py'
+$WGET -O get-pip.py 'https://bootstrap.pypa.io/get-pip.py'
 python get-pip.py \
     --disable-pip-version-check \
     "pip==$PYTHON_PIP_VERSION"

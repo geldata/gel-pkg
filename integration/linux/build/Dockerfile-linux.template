@@ -74,6 +74,9 @@ RUN localedef -f UTF-8 -i en_US en_US.UTF-8
 # Needed to pick up SCL stuff from profile.d/
 SHELL ["/bin/bash", "--login", "-c"]
 
+# wget option defaults for bootstrap
+ENV WGET="wget --no-verbose --secure-protocol=TLSv1_2 --continue"
+
 %%SCRIPTS%%
 
 ENV OPENSSL_VERSION 1.1.1w

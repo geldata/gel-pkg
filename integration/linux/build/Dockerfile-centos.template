@@ -64,6 +64,9 @@ RUN ulimit -n 1024 \
 RUN localedef -f UTF-8 -i en_US en_US.UTF-8
 %%ENDIF%%
 
+# wget option defaults for bootstrap
+ENV WGET="wget --no-verbose --secure-protocol=TLSv1_2 --continue"
+
 %%SCRIPTS%%
 
 RUN set -ex \

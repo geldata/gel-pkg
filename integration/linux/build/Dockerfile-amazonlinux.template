@@ -58,6 +58,9 @@ RUN dnf install -y \
 		zstd \
 	&& dnf swap -y gnupg2-minimal gnupg2-full
 
+# wget option defaults for bootstrap
+ENV WGET="wget --no-verbose --secure-protocol=TLSv1_2 --continue"
+
 %%SCRIPTS%%
 
 RUN set -ex \

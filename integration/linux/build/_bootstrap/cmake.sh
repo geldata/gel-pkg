@@ -32,21 +32,21 @@ mkdir -p /usr/src/cmake
 cd /usr/src
 
 _server="https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}"
-curl -fsSLO "${_server}/cmake-${CMAKE_VERSION}-SHA-256.txt"
-curl -fsSLO "${_server}/cmake-${CMAKE_VERSION}-SHA-256.txt.asc"
+$WGET "${_server}/cmake-${CMAKE_VERSION}-SHA-256.txt"
+$WGET "${_server}/cmake-${CMAKE_VERSION}-SHA-256.txt.asc"
 
 gpg --batch --verify "cmake-${CMAKE_VERSION}-SHA-256.txt.asc" "cmake-${CMAKE_VERSION}-SHA-256.txt"
 rm -f "cmake-${CMAKE_VERSION}-SHA-256.txt.asc"
 
 if [ -n "${CMAKE_ARCH}" ]; then
-	curl -fsSLO "${_server}/cmake-${CMAKE_VERSION}-linux-${CMAKE_ARCH}.tar.gz"
+	$WGET "${_server}/cmake-${CMAKE_VERSION}-linux-${CMAKE_ARCH}.tar.gz"
 	grep " cmake-${CMAKE_VERSION}-linux-${CMAKE_ARCH}.tar.gz\$" "cmake-${CMAKE_VERSION}-SHA-256.txt" | sha256sum -c -
     rm -f "cmake-${CMAKE_VERSION}-SHA-256.txt"
 
     tar -xzf "cmake-${CMAKE_VERSION}-linux-${CMAKE_ARCH}.tar.gz" -C /usr/local --strip-components=1 --no-same-owner
     rm -f "cmake-${CMAKE_VERSION}-linux-${CMAKE_ARCH}.tar.gz"
 else
-    curl -fsSLO "${_server}/cmake-${CMAKE_VERSION}.tar.gz"
+    $WGET "${_server}/cmake-${CMAKE_VERSION}.tar.gz"
     grep " cmake-${CMAKE_VERSION}.tar.gz\$" "cmake-${CMAKE_VERSION}-SHA-256.txt" | sha256sum -c -
     rm -f "cmake-${CMAKE_VERSION}-SHA-256.txt"
 

@@ -6,7 +6,7 @@ set -ex
 
 mkdir -p /usr/src/ninja
 cd /usr/src
-curl -fsSLo ninja.tar.gz "https://github.com/ninja-build/ninja/archive/refs/tags/v${NINJA_VERSION}.tar.gz"
+$WGET -O ninja.tar.gz "https://github.com/ninja-build/ninja/archive/refs/tags/v${NINJA_VERSION}.tar.gz"
 tar -xzC /usr/src/ninja --strip-components=1 -f ninja.tar.gz
 rm ninja.tar.gz
 cd /usr/src/ninja

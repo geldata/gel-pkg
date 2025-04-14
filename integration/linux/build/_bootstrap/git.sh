@@ -14,8 +14,8 @@ fetch_keys "${GIT_KEYS[@]}"
 mkdir -p /usr/src/git
 cd /usr/src
 
-curl -fsSLo git.tar.xz "https://www.kernel.org/pub/software/scm/git/git-${GIT_VERSION}.tar.xz"
-curl -fsSLo git.tar.sign "https://www.kernel.org/pub/software/scm/git/git-${GIT_VERSION}.tar.sign"
+$WGET -O git.tar.xz "https://www.kernel.org/pub/software/scm/git/git-${GIT_VERSION}.tar.xz"
+$WGET -O git.tar.sign "https://www.kernel.org/pub/software/scm/git/git-${GIT_VERSION}.tar.sign"
 
 # gpg --batch --verify git.tar.sign git.tar.xz
 rm -f git.tar.sign

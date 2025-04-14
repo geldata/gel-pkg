@@ -69,8 +69,8 @@ case "$libc" in
         ;;
 esac
 
-curl -fsSLO "${node_server}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz"
-curl -fsSLO "${node_server}/SHASUMS256.txt.asc"
+$WGET "${node_server}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz"
+$WGET "${node_server}/SHASUMS256.txt.asc"
 
 gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc
 grep " node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz\$" SHASUMS256.txt | sha256sum -c -

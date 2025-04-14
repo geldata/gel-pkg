@@ -59,6 +59,9 @@ RUN dnf install -y \
 		zlib-devel \
 		zstd
 
+# wget option defaults for bootstrap
+ENV WGET="wget --no-verbose --secure-protocol=TLSv1_2 --continue"
+
 RUN mkdir -p '.'; /bin/echo -e '#!/bin/bash\n\
 \n\
 set -Exeo pipefail\n\
@@ -201,21 +204,21 @@ mkdir -p /usr/src/cmake\n\
 cd /usr/src\n\
 \n\
 _server="https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}"\n\
-curl -fsSLO "${_server}/cmake-${CMAKE_VERSION}-SHA-256.txt"\n\
-curl -fsSLO "${_server}/cmake-${CMAKE_VERSION}-SHA-256.txt.asc"\n\
+$WGET "${_server}/cmake-${CMAKE_VERSION}-SHA-256.txt"\n\
+$WGET "${_server}/cmake-${CMAKE_VERSION}-SHA-256.txt.asc"\n\
 \n\
 gpg --batch --verify "cmake-${CMAKE_VERSION}-SHA-256.txt.asc" "cmake-${CMAKE_VERSION}-SHA-256.txt"\n\
 rm -f "cmake-${CMAKE_VERSION}-SHA-256.txt.asc"\n\
 \n\
 if [ -n "${CMAKE_ARCH}" ]; then\n\
-	curl -fsSLO "${_server}/cmake-${CMAKE_VERSION}-linux-${CMAKE_ARCH}.tar.gz"\n\
+	$WGET "${_server}/cmake-${CMAKE_VERSION}-linux-${CMAKE_ARCH}.tar.gz"\n\
 	grep " cmake-${CMAKE_VERSION}-linux-${CMAKE_ARCH}.tar.gz\\$" "cmake-${CMAKE_VERSION}-SHA-256.txt" | sha256sum -c -\n\
     rm -f "cmake-${CMAKE_VERSION}-SHA-256.txt"\n\
 \n\
     tar -xzf "cmake-${CMAKE_VERSION}-linux-${CMAKE_ARCH}.tar.gz" -C /usr/local --strip-components=1 --no-same-owner\n\
     rm -f "cmake-${CMAKE_VERSION}-linux-${CMAKE_ARCH}.tar.gz"\n\
 else\n\
-    curl -fsSLO "${_server}/cmake-${CMAKE_VERSION}.tar.gz"\n\
+    $WGET "${_server}/cmake-${CMAKE_VERSION}.tar.gz"\n\
     grep " cmake-${CMAKE_VERSION}.tar.gz\\$" "cmake-${CMAKE_VERSION}-SHA-256.txt" | sha256sum -c -\n\
     rm -f "cmake-${CMAKE_VERSION}-SHA-256.txt"\n\
 \n\
@@ -245,8 +248,8 @@ fetch_keys "${GIT_KEYS[@]}"\n\
 mkdir -p /usr/src/git\n\
 cd /usr/src\n\
 \n\
-curl -fsSLo git.tar.xz "https://www.kernel.org/pub/software/scm/git/git-${GIT_VERSION}.tar.xz"\n\
-curl -fsSLo git.tar.sign "https://www.kernel.org/pub/software/scm/git/git-${GIT_VERSION}.tar.sign"\n\
+$WGET -O git.tar.xz "https://www.kernel.org/pub/software/scm/git/git-${GIT_VERSION}.tar.xz"\n\
+$WGET -O git.tar.sign "https://www.kernel.org/pub/software/scm/git/git-${GIT_VERSION}.tar.sign"\n\
 \n\
 # gpg --batch --verify git.tar.sign git.tar.xz\n\
 rm -f git.tar.sign\n\
@@ -303,8 +306,8 @@ fetch_keys "${GZIP_KEYS[@]}"\n\
 mkdir -p /usr/src/gzip\n\
 cd /usr/src\n\
 \n\
-curl -fsSLo gzip.tar.gz "https://ftp.gnu.org/gnu/gzip/gzip-${GZIP_VERSION}.tar.gz"\n\
-curl -fsSLo gzip.tar.gz.sign "https://ftp.gnu.org/gnu/gzip/gzip-${GZIP_VERSION}.tar.gz.sig"\n\
+$WGET -O gzip.tar.gz "https://ftp.gnu.org/gnu/gzip/gzip-${GZIP_VERSION}.tar.gz"\n\
+$WGET -O gzip.tar.gz.sign "https://ftp.gnu.org/gnu/gzip/gzip-${GZIP_VERSION}.tar.gz.sig"\n\
 \n\
 gpg --batch --verify gzip.tar.gz.sign gzip.tar.gz\n\
 rm -f gzip.tar.gz.sign\n\
@@ -328,7 +331,7 @@ set -ex\n\
 \n\
 mkdir -p /usr/src/meson\n\
 cd /usr/src\n\
-curl -fsSLo meson.tar.gz "https://github.com/mesonbuild/meson/releases/download/${MESON_VERSION}/meson-${MESON_VERSION}.tar.gz"\n\
+$WGET -O meson.tar.gz "https://github.com/mesonbuild/meson/releases/download/${MESON_VERSION}/meson-${MESON_VERSION}.tar.gz"\n\
 mkdir -p /usr/src/meson\n\
 tar -xzC /usr/src/meson --strip-components=1 -f meson.tar.gz\n\
 rm meson.tar.gz\n\
@@ -342,7 +345,7 @@ set -ex\n\
 \n\
 mkdir -p /usr/src/ninja\n\
 cd /usr/src\n\
-curl -fsSLo ninja.tar.gz "https://github.com/ninja-build/ninja/archive/refs/tags/v${NINJA_VERSION}.tar.gz"\n\
+$WGET -O ninja.tar.gz "https://github.com/ninja-build/ninja/archive/refs/tags/v${NINJA_VERSION}.tar.gz"\n\
 tar -xzC /usr/src/ninja --strip-components=1 -f ninja.tar.gz\n\
 rm ninja.tar.gz\n\
 cd /usr/src/ninja\n\
@@ -421,8 +424,8 @@ case "$libc" in\n\
         ;;\n\
 esac\n\
 \n\
-curl -fsSLO "${node_server}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz"\n\
-curl -fsSLO "${node_server}/SHASUMS256.txt.asc"\n\
+$WGET "${node_server}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz"\n\
+$WGET "${node_server}/SHASUMS256.txt.asc"\n\
 \n\
 gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc\n\
 grep " node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz\\$" SHASUMS256.txt | sha256sum -c -\n\
@@ -448,11 +451,11 @@ mkdir -p /usr/src/openssl\n\
 cd /usr/src\n\
 \n\
 if [[ $OPENSSL_VERSION == 1.* ]]; then\n\
-    curl -fsSLo openssl.tar.gz "https://github.com/openssl/openssl/releases/download/OpenSSL_${OPENSSL_VERSION//./_}/openssl-${OPENSSL_VERSION}.tar.gz"\n\
-    curl -fsSLo openssl.tar.gz.asc "https://github.com/openssl/openssl/releases/download/OpenSSL_${OPENSSL_VERSION//./_}/openssl-${OPENSSL_VERSION}.tar.gz.asc"\n\
+    $WGET -O openssl.tar.gz "https://github.com/openssl/openssl/releases/download/OpenSSL_${OPENSSL_VERSION//./_}/openssl-${OPENSSL_VERSION}.tar.gz"\n\
+    $WGET -O openssl.tar.gz.asc "https://github.com/openssl/openssl/releases/download/OpenSSL_${OPENSSL_VERSION//./_}/openssl-${OPENSSL_VERSION}.tar.gz.asc"\n\
 else\n\
-    curl -fsSLo openssl.tar.gz "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz"\n\
-    curl -fsSLo openssl.tar.gz.asc "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz.asc"\n\
+    $WGET -O openssl.tar.gz "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz"\n\
+    $WGET -O openssl.tar.gz.asc "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz.asc"\n\
 fi\n\
 \n\
 gpg --batch --verify openssl.tar.gz.asc openssl.tar.gz\n\
@@ -487,7 +490,7 @@ set -ex\n\
 mkdir -p /usr/src/patchelf\n\
 cd /usr/src\n\
 \n\
-curl -fsSLo patchelf.tar.bz2 "https://github.com/NixOS/patchelf/releases/download/${PATCHELF_VERSION}/patchelf-${PATCHELF_VERSION}.tar.bz2"\n\
+$WGET -O patchelf.tar.bz2 "https://github.com/NixOS/patchelf/releases/download/${PATCHELF_VERSION}/patchelf-${PATCHELF_VERSION}.tar.bz2"\n\
 \n\
 tar -xjC /usr/src/patchelf --strip-components=1 -f patchelf.tar.bz2\n\
 rm -f patchelf.tar.bz2\n\
@@ -506,7 +509,7 @@ set -ex\n\
 \n\
 mkdir -p /usr/src/pkgconf\n\
 cd /usr/src\n\
-curl -fsSLo pkgconf.tar.xz "https://distfiles.ariadne.space/pkgconf/pkgconf-${PKGCONF_VERSION}.tar.xz"\n\
+$WGET -O pkgconf.tar.xz "https://distfiles.ariadne.space/pkgconf/pkgconf-${PKGCONF_VERSION}.tar.xz"\n\
 tar -xJC /usr/src/pkgconf --strip-components=1 -f pkgconf.tar.xz\n\
 rm pkgconf.tar.xz\n\
 cd /usr/src/pkgconf\n\
@@ -535,9 +538,9 @@ fetch_keys "${PYTHON_KEYS[@]}"\n\
 mkdir -p /usr/src/python\n\
 cd /usr/src\n\
 \n\
-curl -fsSLo python.tar.xz \\\n\
+$WGET -O python.tar.xz \\\n\
     "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz"\n\
-curl -fsSLo python.tar.xz.asc \\\n\
+$WGET -O python.tar.xz.asc \\\n\
     "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz.asc"\n\
 \n\
 gpg --batch --verify python.tar.xz.asc python.tar.xz\n\
@@ -582,7 +585,7 @@ ln -sf python3 python\n\
 ln -sf python3-config python-config\n\
 \n\
 cd /usr/src\n\
-curl -fsSLo get-pip.py '\''https://bootstrap.pypa.io/get-pip.py'\''\n\
+$WGET -O get-pip.py '\''https://bootstrap.pypa.io/get-pip.py'\''\n\
 python get-pip.py \\\n\
     --disable-pip-version-check \\\n\
     "pip==$PYTHON_PIP_VERSION"\n\
@@ -628,8 +631,8 @@ fetch_keys "${TAR_KEYS[@]}"\n\
 mkdir -p /usr/src/tar\n\
 cd /usr/src\n\
 \n\
-curl -fsSLo tar.tar.xz "https://ftp.gnu.org/gnu/tar/tar-${TAR_VERSION}.tar.xz"\n\
-curl -fsSLo tar.tar.xz.sign "https://ftp.gnu.org/gnu/tar/tar-${TAR_VERSION}.tar.xz.sig"\n\
+$WGET -O tar.tar.xz "https://ftp.gnu.org/gnu/tar/tar-${TAR_VERSION}.tar.xz"\n\
+$WGET -O tar.tar.xz.sign "https://ftp.gnu.org/gnu/tar/tar-${TAR_VERSION}.tar.xz.sig"\n\
 \n\
 gpg --batch --verify tar.tar.xz.sign tar.tar.xz\n\
 rm -f tar.tar.xz.sign\n\
@@ -661,14 +664,14 @@ fetch_keys "${YARN_KEYS[@]}"\n\
 mkdir -p /usr/src/yarn\n\
 cd /usr/src\n\
 \n\
-curl -fsSLO --compressed "https://yarnpkg.com/downloads/${YARN_VERSION}/yarn-v${YARN_VERSION}.tar.gz"\n\
-curl -fsSLO --compressed "https://yarnpkg.com/downloads/${YARN_VERSION}/yarn-v${YARN_VERSION}.tar.gz.asc"\n\
+$WGET -O yarn.tar.gz "https://yarnpkg.com/downloads/${YARN_VERSION}/yarn-v${YARN_VERSION}.tar.gz"\n\
+$WGET -O yarn.tar.gz.asc "https://yarnpkg.com/downloads/${YARN_VERSION}/yarn-v${YARN_VERSION}.tar.gz.asc"\n\
 \n\
-gpg --batch --verify "yarn-v${YARN_VERSION}.tar.gz.asc" "yarn-v${YARN_VERSION}.tar.gz"\n\
-rm "yarn-v${YARN_VERSION}.tar.gz.asc"\n\
+gpg --batch --verify "yarn.tar.gz.asc" "yarn.tar.gz"\n\
+rm "yarn.tar.gz.asc"\n\
 \n\
-tar -xzC /usr/src/yarn --strip-components=1 -f "yarn-v${YARN_VERSION}.tar.gz"\n\
-rm -f "yarn-v${YARN_VERSION}.tar.gz"\n\
+tar -xzC /usr/src/yarn --strip-components=1 -f "yarn.tar.gz"\n\
+rm -f "yarn.tar.gz"\n\
 \n\
 ln -s /usr/src/yarn/bin/yarn /usr/local/bin/yarn\n\
 ln -s /usr/src/yarn/bin/yarnpkg /usr/local/bin/yarnpkg\n\' >/_bootstrap/yarn.sh; chmod +x /_bootstrap/yarn.sh

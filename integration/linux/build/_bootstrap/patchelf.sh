@@ -7,7 +7,7 @@ set -ex
 mkdir -p /usr/src/patchelf
 cd /usr/src
 
-curl -fsSLo patchelf.tar.bz2 "https://github.com/NixOS/patchelf/releases/download/${PATCHELF_VERSION}/patchelf-${PATCHELF_VERSION}.tar.bz2"
+$WGET -O patchelf.tar.bz2 "https://github.com/NixOS/patchelf/releases/download/${PATCHELF_VERSION}/patchelf-${PATCHELF_VERSION}.tar.bz2"
 
 tar -xjC /usr/src/patchelf --strip-components=1 -f patchelf.tar.bz2
 rm -f patchelf.tar.bz2

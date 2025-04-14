@@ -15,8 +15,8 @@ fetch_keys "${TAR_KEYS[@]}"
 mkdir -p /usr/src/tar
 cd /usr/src
 
-curl -fsSLo tar.tar.xz "https://ftp.gnu.org/gnu/tar/tar-${TAR_VERSION}.tar.xz"
-curl -fsSLo tar.tar.xz.sign "https://ftp.gnu.org/gnu/tar/tar-${TAR_VERSION}.tar.xz.sig"
+$WGET -O tar.tar.xz "https://ftp.gnu.org/gnu/tar/tar-${TAR_VERSION}.tar.xz"
+$WGET -O tar.tar.xz.sign "https://ftp.gnu.org/gnu/tar/tar-${TAR_VERSION}.tar.xz.sig"
 
 gpg --batch --verify tar.tar.xz.sign tar.tar.xz
 rm -f tar.tar.xz.sign

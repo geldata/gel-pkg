@@ -38,11 +38,15 @@ RUN apk add --no-cache \
 		tar \
 		tcl \
 		util-linux-dev \
+		wget \
 		xz \
 		xz-dev \
 		yarn \
 		zip \
 		zstd
+
+# wget option defaults for bootstrap
+ENV WGET="wget --no-verbose --secure-protocol=TLSv1_2 --continue"
 
 %%SCRIPTS%%
 

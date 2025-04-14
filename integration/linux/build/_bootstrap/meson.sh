@@ -6,7 +6,7 @@ set -ex
 
 mkdir -p /usr/src/meson
 cd /usr/src
-curl -fsSLo meson.tar.gz "https://github.com/mesonbuild/meson/releases/download/${MESON_VERSION}/meson-${MESON_VERSION}.tar.gz"
+$WGET -O meson.tar.gz "https://github.com/mesonbuild/meson/releases/download/${MESON_VERSION}/meson-${MESON_VERSION}.tar.gz"
 mkdir -p /usr/src/meson
 tar -xzC /usr/src/meson --strip-components=1 -f meson.tar.gz
 rm meson.tar.gz
