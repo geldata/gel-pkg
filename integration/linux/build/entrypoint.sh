@@ -43,6 +43,10 @@ if [ -n "${EXTRA_OPTIMIZATIONS}" ]; then
     extraopts+=" --extra-optimizations"
 fi
 
+if [ -n "${ENABLE_SCCACHE}" ]; then
+    extraopts+=" --enable-sccache"
+fi
+
 if [ -n "${DEBUG_SYMBOLS}" ]; then
     extraopts+=" --build-debug"
 fi
@@ -100,9 +104,9 @@ if [ -n "${METAPKG_PATH}" ]; then
 fi
 
 if [ "$1" == "bash" ] || [ "${GET_SHELL}" == "true" ]; then
-    echo ${PYTHON} -m metapkg build --dest="${dest}" ${extraopts} "${PACKAGE}"
+    echo ${PYTHON} -m metapkg build --dest="${dest}" --workdir="/build" ${extraopts} "${PACKAGE}"
     exec /bin/bash
 else
-    ${PYTHON} -m metapkg build -vvv --dest="${dest}" ${extraopts} "${PACKAGE}"
+    ${PYTHON} -m metapkg build -vvv --dest="${dest}" --workdir="/build" ${extraopts} "${PACKAGE}"
     ls -al "${dest}"
 fi

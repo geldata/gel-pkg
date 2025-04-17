@@ -45,6 +45,14 @@ if [ -n "${PKG_COMPRESSION}" ]; then
     extraopts+=" --pkg-compression=${PKG_COMPRESSION}"
 fi
 
+if [ -n "${EXTRA_OPTIMIZATIONS}" ]; then
+    extraopts+=" --extra-optimizations"
+fi
+
+if [ -n "${ENABLE_SCCACHE}" ]; then
+    extraopts+=" --enable-sccache"
+fi
+
 if [ -n "${BUILD_GENERIC}" ]; then
     extraopts+=" --generic"
 fi
@@ -70,7 +78,7 @@ if [ -z "${PACKAGE}" ]; then
     PACKAGE="edgedbpkg.edgedb:EdgeDB"
 fi
 
-if [ -z "${VIRTUAL_ENV}"]; then
+if [ -z "${VIRTUAL_ENV}" ]; then
     ${PYTHON} -m venv .venv
     source .venv/Scripts/activate
     ${PYTHON} -m pip install -U pip setuptools wheel

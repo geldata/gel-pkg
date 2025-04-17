@@ -88,6 +88,14 @@ RUN localedef -f UTF-8 -i en_US en_US.UTF-8
 # Needed to pick up SCL stuff from profile.d/
 SHELL ["/bin/bash", "--login", "-c"]
 
+RUN mkdir -p '_bootstrap'; /bin/echo -e 'function fetch_keys() {\n\
+    for key in "${@}"; do\n\
+        gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key" \\\n\
+        || gpg --batch --keyserver pgp.mit.edu --recv-keys "$key" \\\n\
+        || gpg --batch --keyserver keyserver.pgp.com --recv-keys "$key" \\\n\
+        || gpg --batch --keyserver keys.openpgp.org --recv-keys "$key"\n\
+    done\n\
+}\n\' >/_bootstrap/_helpers.sh; chmod +x /_bootstrap/_helpers.sh
 RUN mkdir -p '_bootstrap'; /bin/echo -e '#!/usr/bin/env bash\n\
 \n\
 set -ex\n\
@@ -241,14 +249,6 @@ make -j $(nproc)\n\
 make install\n\
 cd /usr/src\n\
 rm -rf /usr/src/gzip\n\' >/_bootstrap/gzip.sh; chmod +x /_bootstrap/gzip.sh
-RUN mkdir -p '_bootstrap'; /bin/echo -e 'function fetch_keys() {\n\
-    for key in "${@}"; do\n\
-        gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key" \\\n\
-        || gpg --batch --keyserver pgp.mit.edu --recv-keys "$key" \\\n\
-        || gpg --batch --keyserver keyserver.pgp.com --recv-keys "$key" \\\n\
-        || gpg --batch --keyserver keys.openpgp.org --recv-keys "$key"\n\
-    done\n\
-}\n\' >/_bootstrap/_helpers.sh; chmod +x /_bootstrap/_helpers.sh
 RUN mkdir -p '_bootstrap'; /bin/echo -e '#!/usr/bin/env bash\n\
 \n\
 set -ex\n\
@@ -679,6 +679,31 @@ rm -f "yarn.tar.gz"\n\
 \n\
 ln -s /usr/src/yarn/bin/yarn /usr/local/bin/yarn\n\
 ln -s /usr/src/yarn/bin/yarnpkg /usr/local/bin/yarnpkg\n\' >/_bootstrap/yarn.sh; chmod +x /_bootstrap/yarn.sh
+
+
+RUN --mount=type=cache,target=/root/.cache/sccache \
+--mount=type=secret,id=ACTIONS_RESULTS_URL \
+--mount=type=secret,id=ACTIONS_RUNTIME_TOKEN \
+ \
+    set -ex \
+	&& /_bootstrap/rust.sh \
+	&& /_bootstrap/sccache.sh \
+	&& eval $(/_bootstrap/setup-sccache.sh) \
+	&& /_bootstrap/openssl.sh \
+	&& /_bootstrap/python.sh \
+	&& /_bootstrap/git.sh \
+	&& /_bootstrap/patchelf.sh \
+	&& /_bootstrap/gzip.sh \
+	&& /_bootstrap/tar.sh \
+	&& /_bootstrap/pkgconf.sh \
+	&& /_bootstrap/node.sh \
+	&& /_bootstrap/yarn.sh \
+	&& /_bootstrap/go.sh \
+	&& /_bootstrap/meson.sh \
+	&& /_bootstrap/ninja.sh \
+	&& /_bootstrap/cmake.sh \
+	&& sccache --show-stats
+
 RUN mkdir -p '.'; /bin/echo -e '#!/bin/bash\n\
 \n\
 set -Exeo pipefail\n\
@@ -722,6 +747,10 @@ fi\n\
 \n\
 if [ -n "${EXTRA_OPTIMIZATIONS}" ]; then\n\
     extraopts+=" --extra-optimizations"\n\
+fi\n\
+\n\
+if [ -n "${ENABLE_SCCACHE}" ]; then\n\
+    extraopts+=" --enable-sccache"\n\
 fi\n\
 \n\
 if [ -n "${DEBUG_SYMBOLS}" ]; then\n\
@@ -781,35 +810,12 @@ if [ -n "${METAPKG_PATH}" ]; then\n\
 fi\n\
 \n\
 if [ "$1" == "bash" ] || [ "${GET_SHELL}" == "true" ]; then\n\
-    echo ${PYTHON} -m metapkg build --dest="${dest}" ${extraopts} "${PACKAGE}"\n\
+    echo ${PYTHON} -m metapkg build --dest="${dest}" --workdir="/build" ${extraopts} "${PACKAGE}"\n\
     exec /bin/bash\n\
 else\n\
-    ${PYTHON} -m metapkg build -vvv --dest="${dest}" ${extraopts} "${PACKAGE}"\n\
+    ${PYTHON} -m metapkg build -vvv --dest="${dest}" --workdir="/build" ${extraopts} "${PACKAGE}"\n\
     ls -al "${dest}"\n\
 fi\n\' >/entrypoint.sh; chmod +x /entrypoint.sh
 
-
-RUN --mount=type=cache,target=/root/.cache/sccache \
---mount=type=secret,id=ACTIONS_RESULTS_URL \
---mount=type=secret,id=ACTIONS_RUNTIME_TOKEN \
- \
-    set -ex \
-	&& /_bootstrap/rust.sh \
-	&& /_bootstrap/sccache.sh \
-	&& eval $(/_bootstrap/setup-sccache.sh) \
-	&& /_bootstrap/openssl.sh \
-	&& /_bootstrap/python.sh \
-	&& /_bootstrap/git.sh \
-	&& /_bootstrap/patchelf.sh \
-	&& /_bootstrap/gzip.sh \
-	&& /_bootstrap/tar.sh \
-	&& /_bootstrap/pkgconf.sh \
-	&& /_bootstrap/node.sh \
-	&& /_bootstrap/yarn.sh \
-	&& /_bootstrap/go.sh \
-	&& /_bootstrap/meson.sh \
-	&& /_bootstrap/ninja.sh \
-	&& /_bootstrap/cmake.sh \
-	&& sccache --show-stats
 RUN rm -rf /_bootstrap
 RUN set -ex && cmake --version && gcc --version && git --version && go version && meson --version && ninja --version && node --version && npm --version && patchelf --version && pkg-config --version && python3 --version && rustc --version && tar --version && yarn --version

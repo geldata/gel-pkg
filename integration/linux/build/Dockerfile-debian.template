@@ -38,3 +38,5 @@ RUN %%MOUNTS%% \
 	&& /_bootstrap/meson.sh \
 	&& /_bootstrap/cmake.sh \
 	&& sccache --show-stats
+
+%%ENTRYPOINT%%

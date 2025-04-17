@@ -37,6 +37,10 @@ if [ -n "${EXTRA_OPTIMIZATIONS}" ]; then
     extraopts+=" --extra-optimizations"
 fi
 
+if [ -n "${ENABLE_SCCACHE}" ]; then
+    extraopts+=" --enable-sccache"
+fi
+
 if [ -n "${DEBUG_SYMBOLS}" ]; then
     extraopts+=" --build-debug"
 fi
@@ -66,7 +70,7 @@ if [ -z "${PACKAGE}" ]; then
     PACKAGE="edgedbpkg.edgedb:EdgeDB"
 fi
 
-if [ -z "${VIRTUAL_ENV}"]; then
+if [ -z "${VIRTUAL_ENV}" ]; then
     ${PYTHON} -m venv .venv
     source .venv/bin/activate
     ${PYTHON} -m pip install -U pip setuptools wheel
