@@ -70,3 +70,5 @@ RUN %%MOUNTS%% \
 	&& /_bootstrap/meson.sh \
 	&& /_bootstrap/ninja.sh \
 	&& sccache --show-stats
+
+%%ENTRYPOINT%%

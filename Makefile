@@ -28,6 +28,7 @@ GET_SHELL :=
 SSH_KEY :=
 PACKAGE_SERVER :=
 PKG_TEST_JOBS :=
+ENABLE_SCCACHE :=
 
 EXTRAENV =
 EXTRAVOLUMES =
@@ -115,6 +116,10 @@ endif
 
 ifeq ($(BUILD_IS_RELEASE),true)
 	EXTRAENV += -e BUILD_IS_RELEASE=true
+endif
+
+ifeq ($(ENABLE_SCCACHE),true)
+	EXTRAENV += -e ENABLE_SCCACHE=true
 endif
 
 check-target:

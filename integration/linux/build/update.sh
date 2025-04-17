@@ -116,11 +116,13 @@ mounts() {
 
 build_args=$(mktemp /tmp/dockerfile-update.XXXXXX)
 scripts=$(mktemp /tmp/dockerfile-update.XXXXXX)
+entrypoint=$(mktemp /tmp/dockerfile-update.XXXXXX)
 env=$(mktemp /tmp/dockerfile-update.XXXXXX)
 mounts=$(mktemp /tmp/dockerfile-update.XXXXXX)
 function tmpfile_cleanup {
   rm -f "$build_args" >&2
   rm -f "$scripts" >&2
+  rm -f "$entrypoint" >&2
   rm -f "$env" >&2
   rm -f "$mounts" >&2
 }
@@ -142,7 +144,7 @@ embed_script() {
 					| $SED -r -e 's/^(.*)$/\1\\n\\/g' \
 					| $SED -r -e 's/&/\\&/g')"
 	embed_cmd="RUN mkdir -p '${source_dir}'; /bin/echo -e '${source}' >/${source_file}; chmod +x /${source_file}"
-	echo "${embed_cmd}" >>"${scripts}"
+	echo "${embed_cmd}" >>"${target}"
 }
 
 template="${1}"
@@ -170,14 +172,13 @@ $SED -ri \
 	"${target}"
 
 for bootstrap in $(ls _bootstrap/*.sh | sort); do
-	embed_script "$bootstrap" "$target"
+	embed_script "$bootstrap" "$scripts"
 done
-
-embed_script entrypoint.sh "$target"
-
 $AWK -i inplace '@load "readfile"; BEGIN{l = readfile("'"${scripts}"'")}/%%SCRIPTS%%/{gsub("%%SCRIPTS%%", l)}1' "${target}"
-
 echo "RUN rm -rf /_bootstrap" >> "$target"
+
+embed_script entrypoint.sh "$entrypoint"
+$AWK -i inplace '@load "readfile"; BEGIN{l = readfile("'"${entrypoint}"'")}/%%ENTRYPOINT%%/{gsub("%%ENTRYPOINT%%", l)}1' "${target}"
 
 check="RUN set -ex"
 for tool in "${tools[@]}"; do

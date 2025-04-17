@@ -98,3 +98,5 @@ RUN %%MOUNTS%% \
 	&& /_bootstrap/ninja.sh \
 	&& /_bootstrap/cmake.sh \
 	&& sccache --show-stats
+
+%%ENTRYPOINT%%

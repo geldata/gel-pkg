@@ -107,7 +107,9 @@ class PostgresCExtension(packages.BundledCAutoconfPackage):
             "PG_CONFIG": f"!{pg_config}",
         }
 
-    def get_build_env(self, build: targets.Build, wd: str) -> packages.Args:
+    def get_build_env(
+        self, build: targets.Build, wd: str | None
+    ) -> packages.Args:
         pg_config = f'{wd}/{build.sh_get_command("pg_config")}'
         return super().get_build_env(build, wd=wd) | {
             "PG_CONFIG": f"!{pg_config}",
