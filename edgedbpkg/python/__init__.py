@@ -169,7 +169,7 @@ class Python(packages.BundledCAutoconfPackage):
 
         python = f"python{exe_suffix}"
 
-        wrapper_env_args = dict(self.get_build_env(build, wd="${d}"))
+        wrapper_env_args = dict(self.get_ld_env(build, wd="${d}"))
 
         openssl_pkg = build.get_package("openssl")
         if build.is_bundled(openssl_pkg):
