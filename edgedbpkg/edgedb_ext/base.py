@@ -10,6 +10,7 @@ import pathlib
 
 from poetry.core.packages import dependency as poetry_dep
 from poetry.core.constraints import version as poetry_version
+from poetry.core.version import exceptions as poetry_ver_errors
 
 from metapkg import packages
 from metapkg import targets
@@ -58,16 +59,24 @@ class GelServerExtension(packages.BuildSystemMakePackage):
                     "must specify Gel version as epoch, eg 5!1.0"
                 )
         else:
-            edb_ver = poetry_version.Version.parse(server_slot)
-            if edb_ver.minor is None:
-                edb_ver = edb_ver.replace(
-                    release=dataclasses.replace(edb_ver.release, minor=0),
-                )
+            try:
+                edb_ver = poetry_version.Version.parse(server_slot)
+                if edb_ver.minor is None:
+                    edb_ver = edb_ver.replace(
+                        release=dataclasses.replace(edb_ver.release, minor=0),
+                    )
+            except poetry_ver_errors.InvalidVersionError:
+                # Not a valid version spec, assume it's a git rev
+                ver_string = server_slot
+                is_release = False
+            else:
+                ver_string = f"v{edb_ver}"
+                is_release = edb_ver.dev is None
 
             edb = edgedb.Gel.resolve(
                 io,
-                version=f"v{edb_ver}",
-                is_release=edb_ver.dev is None,
+                version=ver_string,
+                is_release=False,
                 target=target,
             )
 
