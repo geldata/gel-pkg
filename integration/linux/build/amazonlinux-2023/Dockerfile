@@ -73,14 +73,6 @@ RUN dnf install -y \
 		zstd \
 	&& dnf swap -y gnupg2-minimal gnupg2-full
 
-RUN mkdir -p '_bootstrap'; /bin/echo -e 'function fetch_keys() {\n\
-    for key in "${@}"; do\n\
-        gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key" \\\n\
-        || gpg --batch --keyserver pgp.mit.edu --recv-keys "$key" \\\n\
-        || gpg --batch --keyserver keyserver.pgp.com --recv-keys "$key" \\\n\
-        || gpg --batch --keyserver keys.openpgp.org --recv-keys "$key"\n\
-    done\n\
-}\n\' >/_bootstrap/_helpers.sh; chmod +x /_bootstrap/_helpers.sh
 RUN mkdir -p '_bootstrap'; /bin/echo -e '#!/usr/bin/env bash\n\
 \n\
 set -ex\n\
@@ -234,6 +226,14 @@ make -j $(nproc)\n\
 make install\n\
 cd /usr/src\n\
 rm -rf /usr/src/gzip\n\' >/_bootstrap/gzip.sh; chmod +x /_bootstrap/gzip.sh
+RUN mkdir -p '_bootstrap'; /bin/echo -e 'function fetch_keys() {\n\
+    for key in "${@}"; do\n\
+        gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key" \\\n\
+        || gpg --batch --keyserver pgp.mit.edu --recv-keys "$key" \\\n\
+        || gpg --batch --keyserver keyserver.pgp.com --recv-keys "$key" \\\n\
+        || gpg --batch --keyserver keys.openpgp.org --recv-keys "$key"\n\
+    done\n\
+}\n\' >/_bootstrap/_helpers.sh; chmod +x /_bootstrap/_helpers.sh
 RUN mkdir -p '_bootstrap'; /bin/echo -e '#!/usr/bin/env bash\n\
 \n\
 set -ex\n\
