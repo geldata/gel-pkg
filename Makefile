@@ -9,6 +9,7 @@ SUPPORTED_TARGETS = \
 	ubuntu-focal \
 	ubuntu-jammy \
 	ubuntu-noble \
+	ubuntu-oracular \
 	centos-7 \
 	centos-8 \
 	rockylinux-9 \
