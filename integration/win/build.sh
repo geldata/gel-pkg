@@ -3,6 +3,8 @@
 set -Exeo pipefail
 shopt -s nullglob
 
+PYTHON=${PYTHON:-python3}
+
 # Circumvent a dubious practice of Windows intercepting
 # bare invocations of "bash" to mean "WSL", since make
 # runs its shells using bare names even if SHELL contains
