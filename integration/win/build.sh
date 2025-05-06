@@ -72,7 +72,7 @@ fi
 
 if [ -z "${VIRTUAL_ENV}"]; then
     ${PYTHON} -m venv .venv
-    source .venv/bin/activate
+    source .venv/Scripts/activate
     ${PYTHON} -m pip install -U pip setuptools wheel
 fi
 
