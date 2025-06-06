@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-from typing import Any, cast
-from typing_extensions import TypedDict
+from typing import (
+    Any,
+    TypedDict,
+    cast,
+)
+from collections.abc import Generator
 
 import contextlib
 import datetime
@@ -224,7 +228,7 @@ def gpg_detach_sign(path: pathlib.Path) -> pathlib.Path:
 
 
 def sha256(path: pathlib.Path) -> pathlib.Path:
-    logger.info("sha256: %s", path)
+    logger.debug("sha256: %s", path)
     with open(path, "rb") as bf:
         hash = hashlib.sha256(bf.read())
     out_path = path.with_suffix(path.suffix + ".sha256")
@@ -235,7 +239,7 @@ def sha256(path: pathlib.Path) -> pathlib.Path:
 
 
 def blake2b(path: pathlib.Path) -> pathlib.Path:
-    logger.info("blake2b: %s", path)
+    logger.debug("blake2b: %s", path)
     with open(path, "rb") as bf:
         hash = hashlib.blake2b(bf.read())
     out_path = path.with_suffix(path.suffix + ".blake2b")
@@ -267,26 +271,33 @@ def format_version_key(ver: Version, revision: str) -> str:
     return ver_key
 
 
+def list_files(
+    prefix: pathlib.Path,
+) -> Generator[pathlib.Path, None, None]:
+    for dirpath, _dirnames, filenames in os.walk(str(prefix)):
+        for filename in filenames:
+            yield pathlib.Path(dirpath) / filename
+
+
 def remove_old(
-    bucket: s3.Bucket,
     prefix: pathlib.Path,
     keep: int,
     channel: str | None = None,
 ) -> None:
-    logger.info("remove_old: %s %s %s %s", bucket, prefix, keep, channel)
+    logger.info("remove_old: %s %s %s", prefix, keep, channel)
     index: dict[
         str,
         dict[
             tuple[semver.Version, datetime.datetime],
-            list[str],
+            list[pathlib.Path],
         ],
     ] = {}
-    prefix_str = str(prefix) + "/"
-    for obj in bucket.objects.filter(Prefix=prefix_str):
-        if is_metadata_object(obj.key):
+
+    for filename in list_files(prefix):
+        if is_metadata_object(filename):
             continue
 
-        metadata = get_metadata(bucket, obj.key)
+        metadata = get_metadata(filename)
         if metadata["channel"] != channel:
             continue
 
@@ -319,33 +330,32 @@ def remove_old(
                 tz=datetime.UTC,
             )
         ver_key = (version, build_date)
-        index.setdefault(key, {}).setdefault(ver_key, []).append(obj.key)
+        index.setdefault(key, {}).setdefault(ver_key, []).append(filename)
 
     for _, versions in index.items():
         sorted_versions = sorted(versions, reverse=True)
         for ver in sorted_versions[keep:]:
-            for obj_key in versions[ver]:
-                logger.info("Deleting outdated: %s", obj_key)
-                bucket.objects.filter(Prefix=obj_key).delete()
+            for filename in versions[ver]:
+                logger.info("Deleting outdated: %s", filename)
+                filename.unlink()
 
 
 def describe_installref(
-    bucket: s3.Bucket,
-    obj: s3.ObjectSummary,
+    path: pathlib.Path,
     metadata: dict[str, Any],
 ) -> InstallRef:
-    ref = obj.key
+    ref = str(path)
     if not ref.startswith("/"):
         ref = f"/{ref}"
 
     verification: dict[str, str | int] = {
-        "size": obj.size,
-        "sha256": read(bucket, f"{obj.key}.sha256").decode("utf-8").rstrip(),
-        "blake2b": read(bucket, f"{obj.key}.blake2b").decode("utf-8").rstrip(),
+        "size": path.stat().st_size,
+        "sha256": pathlib.Path(f"{path}.sha256").read_text().rstrip(),
+        "blake2b": pathlib.Path(f"{path}.blake2b").read_text().rstrip(),
     }
 
     contents = metadata["contents"]
-    desc = contents[pathlib.Path(obj.key).name]
+    desc = contents[path.name]
 
     return InstallRef(
         ref=ref,
@@ -355,16 +365,17 @@ def describe_installref(
     )
 
 
-def is_metadata_object(key: str) -> bool:
-    return key.endswith(
+def is_metadata_object(path: pathlib.Path) -> bool:
+    return str(path).endswith(
         (".sha256", ".blake2b", ".asc", ".metadata.json", "index.html"),
     )
 
 
-def get_metadata(bucket: s3.Bucket, key: str) -> dict[str, Any]:
-    logger.info("read: %s", f"{key}.metadata.json")
-    data = read(bucket, f"{key}.metadata.json")
-    return json.loads(data.decode("utf-8"))  # type: ignore [no-any-return]
+def get_metadata(metadata_file: pathlib.Path) -> dict[str, Any]:
+    logger.debug("read: %s", f"{metadata_file}.metadata.json")
+
+    with open(f"{metadata_file}.metadata.json") as f:
+        return json.load(f)  # type: ignore [no-any-return]
 
 
 def append_artifact(
@@ -410,7 +421,7 @@ def append_artifact(
             installrefs=[installref],
         )
 
-        logger.info("adding %s (%s, %s) to JSON index", *index_key)
+        logger.debug("adding %s (%s, %s) to JSON index", *index_key)
         packages[index_key] = pkg
 
 
@@ -434,33 +445,28 @@ def load_index(idxfile: pathlib.Path) -> PackageIndex:
 
 
 def make_generic_index(
-    bucket: s3.Bucket,
     prefix: pathlib.Path,
     pkg_dir: str,
 ) -> None:
-    logger.info("make_index: %s %s %s", bucket, prefix, pkg_dir)
+    logger.debug("make_index: %s %s", prefix, pkg_dir)
     packages: dict[tuple[str, str, str], Package] = {}
-    for obj in bucket.objects.filter(Prefix=str(prefix / pkg_dir)):
-        path = pathlib.Path(obj.key)
+    for path in list_files(prefix / pkg_dir):
         leaf = path.name
 
         if path.parent.name != pkg_dir:
             logger.warning(f"{leaf}: wrong dist")
             continue
 
-        if is_metadata_object(obj.key):
-            logger.info(f"{leaf} is metadata")
+        if is_metadata_object(path):
             continue
 
-        metadata = get_metadata(bucket, obj.key)
-        installref = describe_installref(bucket, obj, metadata)
+        metadata = get_metadata(path)
+        installref = describe_installref(path, metadata)
         append_artifact(packages, metadata, installref)
 
     index = Packages(packages=list(packages.values()))
-    source_bytes = json.dumps(index).encode("utf8")
-    target_dir = prefix / ".jsonindexes"
-    index_name = pkg_dir + ".json"
-    put(bucket, source_bytes, target_dir, name=index_name)
+    with open(prefix / ".jsonindexes" / f"{pkg_dir}.json", "w") as f:
+        json.dump(index, f)
 
 
 def put(
@@ -486,7 +492,7 @@ def put(
         ct, _ = mimetypes.guess_type(name)
         if ct is not None and "/" in ct:
             content_type = ct
-    logger.info("put s3://%s/%s/%s", bucket.name, target, name)
+    logger.debug("put s3://%s/%s/%s", bucket.name, target, name)
     with ctx as body:
         result = bucket.put_object(
             Key=str(target / name),
@@ -494,7 +500,6 @@ def put(
             CacheControl=CACHE if cache else NO_CACHE,
             ContentType=content_type,
         )
-    logger.info(result)
     return result
 
 
@@ -525,7 +530,9 @@ def sync_to_local(
         src_path = f"/{src_path}"
     cmd.append(f"s3://{bucket.name}{src_path}")
     cmd.append(str(target))
+    logger.info(" ".join(cmd))
     subprocess_run(cmd, check=True)
+    logger.info("sync_to_local done")
 
 
 def sync_to_s3(
@@ -554,6 +561,7 @@ def sync_to_s3(
     cmd.append(f"s3://{bucket.name}{tgt_path}")
     logger.info(" ".join(cmd))
     subprocess_run(cmd, check=True)
+    logger.info("sync_to_s3 done")
 
 
 @click.command()
@@ -688,7 +696,6 @@ def process_generic(
     local_dir: pathlib.Path,
 ) -> None:
     bucket = s3session.Bucket(bucket_name)
-    pkg_directories = set()
     rrules = {}
     basename = metadata["name"]
     slot = metadata.get("version_slot")
@@ -698,10 +705,34 @@ def process_generic(
     target = metadata["target"]
     contents = metadata["contents"]
     pkg_dir = f"{target}{channel_suf}"
-    pkg_directories.add(pkg_dir)
+    local_archive_dir = local_dir / ARCHIVE
+    local_archive_dir.mkdir(parents=True, exist_ok=True)
+    index_dir = local_archive_dir / ".jsonindexes"
+    index_dir.mkdir(exist_ok=True)
+    bucket_index_dir = ARCHIVE / ".jsonindexes"
 
     staging_dir = temp_dir / pkg_dir
     os.makedirs(staging_dir)
+
+    archive_dir = local_archive_dir / pkg_dir
+    bucket_archive_dir = ARCHIVE / pkg_dir
+    bucket_dist_dir = DIST / pkg_dir
+
+    sync_to_local(
+        bucket,
+        bucket_archive_dir,
+        archive_dir,
+        exact_timestamps=True,
+    )
+
+    sync_to_local(
+        bucket,
+        bucket_index_dir,
+        index_dir,
+        exact_timestamps=True,
+    )
+
+    dist_links = []
 
     for member in tf.getmembers():
         if member.name in {".", "build-metadata.json"}:
@@ -712,9 +743,10 @@ def process_generic(
 
         desc = contents[member.name]
         ext = desc["suffix"]
-        asc_path = gpg_detach_sign(staging_dir / leaf)
-        sha256_path = sha256(staging_dir / leaf)
-        blake2b_path = blake2b(staging_dir / leaf)
+        artifact_path = staging_dir / leaf
+        asc_path = gpg_detach_sign(artifact_path)
+        sha256_path = sha256(artifact_path)
+        blake2b_path = blake2b(artifact_path)
         metadata_path = staging_dir / f"{leaf}.metadata.json"
 
         with open(metadata_path, "w") as f:
@@ -727,12 +759,11 @@ def process_generic(
         logger.info(f"ext={ext}")
 
         # Store the fully-qualified artifact to archive/
-        archive_dir = ARCHIVE / pkg_dir
-        put(bucket, staging_dir / leaf, archive_dir, cache=True)
-        put(bucket, asc_path, archive_dir, cache=True)
-        put(bucket, sha256_path, archive_dir, cache=True)
-        put(bucket, blake2b_path, archive_dir, cache=True)
-        put(bucket, metadata_path, archive_dir, cache=True)
+        shutil.copy(artifact_path, archive_dir)
+        shutil.copy(asc_path, archive_dir)
+        shutil.copy(sha256_path, archive_dir)
+        shutil.copy(blake2b_path, archive_dir)
+        shutil.copy(metadata_path, archive_dir)
 
         links = metadata.get("publish_link_to_latest")
         if links and desc.get("encoding") == "identity":
@@ -749,24 +780,37 @@ def process_generic(
                 # we generate a bucket-wide redirect policy for the
                 # dist/ object to point to the archive/ object.  See
                 # below for details.
-                target_dir = DIST / pkg_dir
                 dist_name = f"{link}{slot_suf}{ext}"
-                put(bucket, b"", target_dir, name=dist_name)
+                dist_links.extend(
+                    [
+                        dist_name,
+                        f"{dist_name}.asc",
+                        f"{dist_name}.sha256",
+                        f"{dist_name}.blake2b",
+                    ]
+                )
 
-                asc_name = f"{dist_name}.asc"
-                put(bucket, b"", target_dir, name=asc_name)
+                rrules[bucket_dist_dir / dist_name] = bucket_archive_dir / leaf
 
-                sha_name = f"{dist_name}.sha256"
-                put(bucket, b"", target_dir, name=sha_name)
+    remove_old(archive_dir, keep=1, channel="nightly")
+    make_generic_index(local_archive_dir, pkg_dir)
 
-                sha_name = f"{dist_name}.blake2b"
-                put(bucket, b"", target_dir, name=sha_name)
+    sync_to_s3(
+        bucket,
+        archive_dir,
+        bucket_archive_dir,
+        cache_control=CACHE,
+    )
 
-                rrules[target_dir / dist_name] = archive_dir / leaf
+    sync_to_s3(
+        bucket,
+        index_dir,
+        bucket_index_dir,
+        cache_control=NO_CACHE,
+    )
 
-    for pkg_dir in pkg_directories:
-        remove_old(bucket, ARCHIVE / pkg_dir, keep=1, channel="nightly")
-        make_generic_index(bucket, ARCHIVE, pkg_dir)
+    for dist_link in dist_links:
+        put(bucket, b"", bucket_dist_dir, name=dist_link)
 
     if rrules:
         # We can't use per-object redirects, because in that case S3
