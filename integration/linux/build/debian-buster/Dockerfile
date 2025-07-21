@@ -25,6 +25,8 @@ ENV SCCACHE_GHA_ENABLED=$SCCACHE_GHA_ENABLED
 ENV ACTIONS_CACHE_SERVICE_V2=$ACTIONS_CACHE_SERVICE_V2
 
 
+# Buster is out of support, point it at archive.debian.org
+RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list
 RUN apt-get update \
 	&& apt-get dist-upgrade -y \
 	&& apt-get install -y --no-install-recommends \
