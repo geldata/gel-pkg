@@ -10,6 +10,8 @@ ENV container docker
 
 STOPSIGNAL SIGRTMIN+3
 
+# Buster is out of support, point it at archive.debian.org
+RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list
 RUN apt-get update && apt-get install -y --no-install-recommends \
     systemd jq curl gnupg apt-transport-https ca-certificates \
 	&& rm -rf /var/lib/apt/lists/*

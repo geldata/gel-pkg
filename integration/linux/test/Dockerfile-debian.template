@@ -1,4 +1,8 @@
 FROM debian:%%PLACEHOLDER%%
+%%IF VARIANT=debian-buster%%
+# Buster is out of support, point it at archive.debian.org
+RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list
+%%ENDIF%%
 %%WRITE_ENTRYPOINT%%
 RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]

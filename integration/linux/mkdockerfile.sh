@@ -39,6 +39,10 @@ platform="${variant%%-*}"
 { generated_warning; cat "$template"; } > "${target}"
 
 $SED -ri \
+	-e '/%%IF VARIANT=.*'"${variant}"'.*%%/,/%%ENDIF%%/ { /%%IF VARIANT=/d; /%%ENDIF%%/d; }' \
+	-e '/%%IFNOT VARIANT=.*'"${variant}"'.*%%/,/%%ENDIF%%/d' \
+	-e '/%%IF VARIANT=.*%%/,/%%ENDIF%%/d' \
+	-e '/%%IFNOT VARIANT=.*%%/,/%%ENDIF%%/ { /%%IFNOT VARIANT=/d; /%%ENDIF%%/d; }' \
 	-e 's!^(FROM (\w+)):%%PLACEHOLDER%%!\1:'"${variant#*-}"'!'\
 	"${target}"
 
