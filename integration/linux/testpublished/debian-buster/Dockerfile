@@ -5,6 +5,8 @@
 #
 
 FROM debian:buster
+# Buster is out of support, point it at archive.debian.org
+RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list
 RUN /bin/echo -e '#!/bin/bash\n\
 \n\
 set -ex\n\
