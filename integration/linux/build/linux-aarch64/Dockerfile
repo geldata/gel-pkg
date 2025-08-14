@@ -533,7 +533,7 @@ RUN mkdir -p '_bootstrap'; /bin/echo -e '#!/usr/bin/env bash\n\
 \n\
 set -ex\n\
 \n\
-: ${RUST_VERSION:=1.85.0}\n\
+: ${RUST_VERSION:=1.88.0}\n\
 \n\
 curl --proto '\''=https'\'' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- \\\n\
     -y --no-modify-path --profile default \\\n\
